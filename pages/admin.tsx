@@ -12,6 +12,7 @@ export default function AdminMintPage() {
   const { data } = useContractPrices();
   const [token, setToken] = useState<Token>("oGold");
   const [grams, setGrams] = useState<string>("");
+  const [successTx, setSuccessTx] = useState<string | null>(null);
 
   const priceUsd = useMemo(() => {
     if (token === "oGold") return data?.gold?.usdPerGram ?? 0;
@@ -69,7 +70,12 @@ export default function AdminMintPage() {
       const data = mintPayload(token === "oGold" ? "oGOLD" : "oSILVER", String(account.address), amt6);
       const res = await signAndSubmitTransaction({ sender: String(account.address), data: data as any });
       console.log("mint tx:", res);
-      alert("Submitted mint");
+      
+      // Show success popup with explorer link
+      const txHash = res?.hash;
+      if (txHash) {
+        setSuccessTx(txHash);
+      }
     } catch (e) {
       console.error(e);
       alert("Mint failed. Check console");
@@ -161,6 +167,42 @@ export default function AdminMintPage() {
           )}
         </div>
       </div>
+
+      {/* Success Modal */}
+      {successTx && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">✅</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Mint Successful!</h3>
+              <p className="text-sm text-black/60 dark:text-white/60 mb-4">
+                Your {token} tokens have been minted successfully.
+              </p>
+              
+              <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 mb-4">
+                <div className="text-xs text-black/60 dark:text-white/60 mb-2">Transaction</div>
+                <a
+                  href={`https://explorer.aptoslabs.com/txn/${successTx}?network=testnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-mono break-all block"
+                >
+                  {successTx}
+                </a>
+              </div>
+              
+              <button
+                onClick={() => setSuccessTx(null)}
+                className="w-full h-10 rounded-full bg-black text-white dark:bg-white dark:text-black text-sm font-medium hover:opacity-90"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

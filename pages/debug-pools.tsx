@@ -76,8 +76,8 @@ export default function DebugPoolsPage() {
   const goldPriceUSD = oracle?.xau_usd_6 ? oracle.xau_usd_6 / 1_000_000 : 0;
   const silverPriceUSD = oracle?.xag_usd_6 ? oracle.xag_usd_6 / 1_000_000 : 0;
   
-  const mintedGoldValue = por?.total_minted_ogold ? (por.total_minted_ogold * goldPriceUSD) : 0;
-  const mintedSilverValue = por?.total_minted_osilver ? (por.total_minted_osilver * silverPriceUSD) : 0;
+  const mintedGoldValue = por?.total_minted_ogold ? ((por.total_minted_ogold / 1_000_000) * goldPriceUSD) : 0;
+  const mintedSilverValue = por?.total_minted_osilver ? ((por.total_minted_osilver / 1_000_000) * silverPriceUSD) : 0;
   const totalMintedValue = mintedGoldValue + mintedSilverValue;
 
   return (
@@ -163,12 +163,12 @@ export default function DebugPoolsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-black/60 dark:text-white/60">Minted oGOLD</div>
-                  <div className="font-mono">{por?.total_minted_ogold?.toFixed(6) || "0"} grams</div>
+                  <div className="font-mono">{por?.total_minted_ogold ? (por.total_minted_ogold / 1_000_000).toFixed(6) : "0"} grams</div>
                   <div className="text-xs text-black/50 dark:text-white/50">Value: ${mintedGoldValue.toFixed(2)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-black/60 dark:text-white/60">Minted oSILVER</div>
-                  <div className="font-mono">{por?.total_minted_osilver?.toFixed(6) || "0"} grams</div>
+                  <div className="font-mono">{por?.total_minted_osilver ? (por.total_minted_osilver / 1_000_000).toFixed(6) : "0"} grams</div>
                   <div className="text-xs text-black/50 dark:text-white/50">Value: ${mintedSilverValue.toFixed(2)}</div>
                 </div>
               </div>
