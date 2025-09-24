@@ -2,17 +2,19 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useMetalPrices } from "@/hooks/useMetalPrices";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
+import { buyTokenPayload, sellTokenPayload, registerPayloads, fetchBalance, coinTypeFor } from "@/utils/orion";
 
 type Asset = "oGold" | "oSilver";
 
 export default function TradePage() {
   const { data } = useMetalPrices();
-  const { account } = useWallet();
+  const { account, signAndSubmitTransaction } = useWallet();
 
   const [asset, setAsset] = useState<Asset>("oGold");
   const [pay, setPay] = useState<string>("");
   const [receive, setReceive] = useState<string>("");
   const [payIsUSDC, setPayIsUSDC] = useState<boolean>(true); // if false, paying in grams
+  const [balance, setBalance] = useState<string>("");
 
   const price = useMemo(() => {
     return asset === "oGold" ? data?.gold?.usdPerGram ?? 0 : data?.silver?.usdPerGram ?? 0;
@@ -30,6 +32,20 @@ export default function TradePage() {
       setReceive("");
     }
   }, [pay, price, payIsUSDC]);
+
+  useEffect(() => {
+    async function loadBalance() {
+      if (!account?.address) return setBalance("");
+      const coinType = payIsUSDC ? coinTypeFor("USDC") : coinTypeFor(asset === "oGold" ? "xGOLD" : "xSILVER");
+      try {
+        const val = await fetchBalance(account.address, coinType);
+        setBalance((val / 1_000_000).toString());
+      } catch (e) {
+        setBalance("");
+      }
+    }
+    loadBalance();
+  }, [account?.address, asset, payIsUSDC]);
 
   function onReceiveChange(val: string) {
     setReceive(val);
@@ -84,9 +100,14 @@ export default function TradePage() {
         <div className="space-y-4">
           <div className="rounded-2xl ring-1 ring-black/10 dark:ring-white/15 p-4">
             <div className="text-xs text-black/60 dark:text-white/60 mb-2">Pay</div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <input value={pay} onChange={(e) => setPay(e.target.value)} className="bg-transparent outline-none text-2xl font-semibold w-full" placeholder="0" />
-              <div className="text-sm">{payIsUSDC ? "USDC" : asset}</div>
+              <div className="text-right">
+                <div className="text-sm">{payIsUSDC ? "USDC" : asset}</div>
+                {account && (
+                  <div className="text-[10px] text-black/60 dark:text-white/60">Bal: {balance || "--"}</div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -110,7 +131,31 @@ export default function TradePage() {
           </div>
 
           {account ? (
-            <button className="w-full h-11 rounded-full bg-black !text-white dark:bg-white dark:!text-black text-sm font-medium">
+            <button
+              className="w-full h-11 rounded-full bg-black !text-white dark:bg-white dark:!text-black text-sm font-medium"
+              onClick={async () => {
+                try {
+                  const txs = [] as any[];
+                  // Ensure registration (best-effort; ignore failures if already registered)
+                  for (const p of registerPayloads(asset === "oGold" ? "xGOLD" : "xSILVER")) {
+                    txs.push(signAndSubmitTransaction({ sender: account.address, data: p }).catch(() => null));
+                  }
+                  await Promise.all(txs);
+
+                  const amt = pay; // always use what the user is paying
+                  const amt6 = amt ? String(Math.floor(parseFloat(amt) * 1_000_000)) : "0";
+                  const data = payIsUSDC
+                    ? buyTokenPayload(asset === "oGold" ? "xGOLD" : "xSILVER", amt6)
+                    : sellTokenPayload(asset === "oGold" ? "xGOLD" : "xSILVER", amt6);
+
+                  const res = await signAndSubmitTransaction({ sender: account.address, data });
+                  console.log("swap tx:", res);
+                } catch (e) {
+                  console.error(e);
+                  alert("Swap failed. Check console.");
+                }
+              }}
+            >
               {payIsUSDC ? `Swap USDC → ${asset}` : `Swap ${asset} → USDC`}
             </button>
           ) : (

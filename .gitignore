@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# move / aptos
+# Ignore vendored aptos-core and generated build artifacts
+contracts/vendor/
+contracts/**/build/

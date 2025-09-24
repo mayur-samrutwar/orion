@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import { useMetalPrices } from "@/hooks/useMetalPrices";
+import { ORION_ADDR, mintPayload } from "@/utils/orion";
 
 type Token = "oGold" | "oSilver";
 
@@ -22,9 +23,19 @@ export default function AdminMintPage() {
     return g * priceUsd;
   }, [grams, priceUsd]);
 
-  function onMint() {
-    // TODO: Wire to your mint transaction. This is a placeholder hook-up.
-    alert(`Minting ${grams || 0}g of ${token}`);
+  const { signAndSubmitTransaction } = useWallet();
+  async function onMint() {
+    try {
+      if (!account?.address) throw new Error("No wallet");
+      const amt6 = grams ? String(Math.floor(parseFloat(grams) * 1_000_000)) : "0";
+      const data = mintPayload(token === "oGold" ? "xGOLD" : "xSILVER", account.address, amt6);
+      const res = await signAndSubmitTransaction({ sender: account.address, data });
+      console.log("mint tx:", res);
+      alert("Submitted mint");
+    } catch (e) {
+      console.error(e);
+      alert("Mint failed. Check console");
+    }
   }
 
   return (

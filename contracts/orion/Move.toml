@@ -1,0 +1,15 @@
+[package]
+name = "orion"
+version = "0.0.1"
+authors = ["orion"]
+
+[addresses]
+orion = "0x7d0d430388dce99d6352098f0e029454f8fcef7458a68328f533b78df5072379"
+aptos_framework = "0x1"
+aptos_std = "0x1"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "main" }
+AptosStdlib   = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-stdlib", rev = "main" }
+
+
