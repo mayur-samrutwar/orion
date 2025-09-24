@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { Seo } from "@/components/layout/Seo";
-import { useMetalPrices } from "@/hooks/useMetalPrices";
+import { useContractPrices } from "@/hooks/useContractPrices";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import { buyTokenPayload, sellTokenPayload, registerPayloads, fetchBalance, coinTypeFor } from "@/utils/orion";
@@ -10,7 +10,7 @@ import AssetSelect from "@/components/market/AssetSelect";
 type Asset = "oGold" | "oSilver";
 
 export default function TradePage() {
-  const { data } = useMetalPrices();
+  const { data } = useContractPrices();
   const { account, signAndSubmitTransaction } = useWallet();
 
   const [asset, setAsset] = useState<Asset>("oGold");
@@ -19,6 +19,7 @@ export default function TradePage() {
   const [payIsUSDC, setPayIsUSDC] = useState<boolean>(true); // if false, paying in grams
   const [balance, setBalance] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [successTx, setSuccessTx] = useState<string | null>(null);
 
   const price = useMemo(() => {
     return asset === "oGold" ? data?.gold?.usdPerGram ?? 0 : data?.silver?.usdPerGram ?? 0;
@@ -117,31 +118,6 @@ export default function TradePage() {
                 {account && (
                   <div className="text-[10px] text-black/60 dark:text-white/60 flex items-center gap-2 justify-end">
                     <span>Bal: {balance || "--"}</span>
-                    <button
-                      className="underline hover:opacity-70"
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        try {
-                          const token = asset === "oGold" ? "oGOLD" : "oSILVER";
-                          const regs = registerPayloads(token);
-                          for (const p of regs) {
-                            await signAndSubmitTransaction({ sender: String(account.address!), data: p as any }).catch(() => null);
-                          }
-                          // reload balance after short delay
-                          setTimeout(() => {
-                            (async () => {
-                              const coinType = payIsUSDC ? coinTypeFor("USDC") : coinTypeFor(token);
-                              try {
-                                const val = await fetchBalance(String(account.address!), coinType);
-                                setBalance((val / 1_000_000).toString());
-                              } catch {}
-                            })();
-                          }, 800);
-                        } catch {}
-                      }}
-                    >
-                      Register
-                    </button>
                   </div>
                 )}
               </div>
@@ -165,9 +141,14 @@ export default function TradePage() {
 
           <div className="rounded-2xl ring-1 ring-black/10 dark:ring-white/15 p-4 text-xs text-black/70 dark:text-white/70">
             <div className="flex items-center justify-between">
-              <span>Rate</span>
+              <span>Rate {data?.source === "contract-oracle" ? "📋" : "🌐"}</span>
               <span>{price > 0 ? `1 ${asset} = $${price.toFixed(2)} USD` : "--"}</span>
             </div>
+            {data?.source && (
+              <div className="text-[10px] text-black/50 dark:text-white/50 mt-1">
+                Source: {data.source === "contract-oracle" ? "Contract Oracle" : data.source}
+              </div>
+            )}
           </div>
 
           {account ? (
@@ -193,6 +174,13 @@ export default function TradePage() {
 
                   const res = await signAndSubmitTransaction({ sender: String(account.address), data: data as any });
                   console.log("swap tx:", res);
+                  
+                  // Show success popup with explorer link
+                  const txHash = res?.hash;
+                  if (txHash) {
+                    setSuccessTx(txHash);
+                  }
+                  
                   // Refresh balance after swap
                   setTimeout(async () => {
                     try {

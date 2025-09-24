@@ -2,14 +2,14 @@ import React, { useMemo, useState } from "react";
 import { Seo } from "@/components/layout/Seo";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
-import { useMetalPrices } from "@/hooks/useMetalPrices";
+import { useContractPrices } from "@/hooks/useContractPrices";
 import { ORION_ADDR, mintPayload } from "@/utils/orion";
 
 type Token = "oGold" | "oSilver";
 
 export default function AdminMintPage() {
   const { account } = useWallet();
-  const { data } = useMetalPrices();
+  const { data } = useContractPrices();
   const [token, setToken] = useState<Token>("oGold");
   const [grams, setGrams] = useState<string>("");
 
