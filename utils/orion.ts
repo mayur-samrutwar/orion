@@ -55,11 +55,12 @@ export async function fetchBalance(owner: string, coinType: string, endpoint = p
     type_arguments: [coinType],
     arguments: [owner],
   };
-  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(body), cache: "no-store" as any });
   if (!res.ok) throw new Error(`balance view failed: ${res.status}`);
   const json = await res.json();
   // returns [u64]
-  const val = Array.isArray(json) ? Number(json[0] || 0) : 0;
+  const raw = Array.isArray(json) ? json[0] : 0;
+  const val = typeof raw === "string" ? Number(raw) : Number(raw || 0);
   return val; // in 6 decimals
 }
 

@@ -38,10 +38,19 @@ export default function TradePage() {
       if (!account?.address) return setBalance("");
       const coinType = payIsUSDC ? coinTypeFor("USDC") : coinTypeFor(asset === "oGold" ? "xGOLD" : "xSILVER");
       try {
-        const val = await fetchBalance(account.address, coinType);
+        // Prefer serverless proxy to avoid CORS/cache issues
+        const r = await fetch("/api/balance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ owner: account.address, coinType }) });
+        if (!r.ok) throw new Error("api fail");
+        const j = await r.json();
+        const val = Number(j?.value || 0);
         setBalance((val / 1_000_000).toString());
       } catch (e) {
-        setBalance("");
+        try {
+          const val = await fetchBalance(account.address, coinType);
+          setBalance((val / 1_000_000).toString());
+        } catch {
+          setBalance("0");
+        }
       }
     }
     loadBalance();
