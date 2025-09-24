@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useMetalPrices } from "@/hooks/useMetalPrices";
 
 type Row = {
@@ -33,7 +34,9 @@ function List({ title, rows }: { title: string; rows: Row[] }) {
                   <Image src={r.title === "oGold" ? "/icons/gold.png" : "/icons/silver.png"} alt={r.title} width={18} height={18} />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">{r.title}</div>
+                  <Link href={`/assets/${r.title.toLowerCase()}`} className="text-sm font-semibold hover:underline">
+                    {r.title}
+                  </Link>
                   <div className="text-xs text-black/60 dark:text-white/60">{r.subtitle}</div>
                 </div>
               </div>

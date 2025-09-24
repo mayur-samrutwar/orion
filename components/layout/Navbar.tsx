@@ -25,7 +25,7 @@ export function Navbar() {
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">Buy oGold</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">buy oSilver</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">Buy oSilver</Link>
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">Proof of Reserve</Link>
         </nav>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { useMetalPrices } from "@/hooks/useMetalPrices";
+import Link from "next/link";
 
 type Asset = {
   name: string;
@@ -19,7 +20,7 @@ function AssetCard({ asset }: { asset: Asset }) {
     : asset.price;
   const isUp = asset.changePct24h >= 0;
   return (
-    <div className="rounded-3xl bg-white/60 dark:bg-white/5 backdrop-blur p-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+    <Link href={`/assets/${asset.ticker.toLowerCase()}`} className="block rounded-3xl bg-white/60 dark:bg-white/5 backdrop-blur p-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10 hover:ring-black/10 dark:hover:ring-white/20 transition">
       <div className="flex items-center gap-3 mb-4">
         <div className="h-8 w-8 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center overflow-hidden">
           <Image src={asset.ticker === "oGold" ? "/icons/gold.png" : "/icons/silver.png"} alt={asset.ticker} width={18} height={18} />
@@ -38,7 +39,7 @@ function AssetCard({ asset }: { asset: Asset }) {
           <Sparkline ticker={asset.ticker} isUp={isUp} />
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
