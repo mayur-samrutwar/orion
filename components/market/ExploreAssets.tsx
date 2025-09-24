@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { useMetalPrices } from "@/hooks/useMetalPrices";
+import { useContractPrices } from "@/hooks/useContractPrices";
 import Link from "next/link";
 
 type Asset = {
@@ -12,7 +12,7 @@ type Asset = {
 };
 
 function AssetCard({ asset }: { asset: Asset }) {
-  const { data } = useMetalPrices();
+  const { data } = useContractPrices();
   const livePrice = asset.ticker === "oGold"
     ? data?.gold?.usdPerGram ?? asset.price
     : asset.ticker === "oSilver"

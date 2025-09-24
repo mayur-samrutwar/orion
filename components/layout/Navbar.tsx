@@ -1,10 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import React, { useState } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
+import { useKYC } from "@/hooks/useKYC";
 
 export function Navbar() {
   const { account, connect, disconnect } = useWallet();
+  const { canAccessPlatform, isIndian } = useKYC();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const addressString = account?.address
@@ -20,16 +23,29 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full backdrop-blur bg-white/70 dark:bg-black/40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link className="text-xl font-semibold tracking-tight" href="/">Orion</Link>
+          <Link className="flex items-center gap-1.5" href="/">
+            <Image 
+              src="/logo.png" 
+              alt="Orion Logo" 
+              width={40} 
+              height={40}
+              className="rounded-lg"
+            />
+            <span className="text-2xl font-semibold tracking-tight">Orion</span>
+          </Link>
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/lp">LP</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/admin">Admin</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/set-prices">Set Prices</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/debug-pools">Debug</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
+          {canAccessPlatform() && (
+            <>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/lp">LP</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/admin">Admin</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/set-prices">Set Prices</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/debug-pools">Debug</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
+            </>
+          )}
         </nav>
 
         <div className="relative">
@@ -39,9 +55,16 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="h-10 px-4 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-black/50 backdrop-blur text-sm font-medium"
+                className="h-10 px-4 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-black/50 backdrop-blur text-sm font-medium flex items-center gap-2"
               >
                 {shortAddress}
+                {isIndian !== null && (
+                  <div className={`w-2 h-2 rounded-full ${
+                    isIndian 
+                      ? 'bg-green-500' 
+                      : 'bg-red-500'
+                  }`} />
+                )}
               </button>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-40 rounded-xl border border-black/10 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-lg py-1">
@@ -69,12 +92,16 @@ export function Navbar() {
       </div>
       <div className="md:hidden">
         <div className="px-4 py-3 flex items-center justify-center gap-6 text-sm">
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/lp">LP</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/admin">Admin</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/set-prices">Set Prices</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/debug-pools">Debug</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
+          {canAccessPlatform() && (
+            <>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/lp">LP</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/admin">Admin</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/set-prices">Set Prices</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/debug-pools">Debug</Link>
+              <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
+            </>
+          )}
         </div>
       </div>
     </header>

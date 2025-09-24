@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import Image from "next/image";
-import { useMetalPrices } from "@/hooks/useMetalPrices";
+import { useContractPrices } from "@/hooks/useContractPrices";
 
 type PriceItem = {
   name: string;
@@ -35,7 +35,7 @@ function TickerItem({ item }: { item: PriceItem }) {
 }
 
 export function PriceTicker() {
-  const { data } = useMetalPrices();
+  const { data } = useContractPrices();
   const dataItems: PriceItem[] = useMemo(() => {
     const gold = data?.gold?.usdPerGram ?? 2387.12 / 88;
     const silver = data?.silver?.usdPerGram ?? 28.44 / 88;

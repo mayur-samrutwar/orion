@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMetalPrices } from "@/hooks/useMetalPrices";
+import { useContractPrices } from "@/hooks/useContractPrices";
 
 type Row = {
   icon?: string; // reserved for future brand icons
@@ -12,7 +12,7 @@ type Row = {
 };
 
 function List({ title, rows }: { title: string; rows: Row[] }) {
-  const { data } = useMetalPrices();
+  const { data } = useContractPrices();
   return (
     <div className="rounded-3xl bg-white/60 dark:bg-white/5 backdrop-blur p-5 ring-1 ring-black/5 dark:ring-white/10 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
