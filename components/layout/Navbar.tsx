@@ -24,8 +24,7 @@ export function Navbar() {
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/assets/ogold">Buy oGold</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/assets/osilver">Buy oSilver</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
         </nav>
 
@@ -70,9 +69,8 @@ export function Navbar() {
       </div>
       <div className="md:hidden">
         <div className="px-4 py-3 flex items-center justify-center gap-6 text-sm">
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/assets/ogold">buy gold</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/assets/osilver">buy silver</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">proof of reserve</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
         </div>
       </div>
     </header>
