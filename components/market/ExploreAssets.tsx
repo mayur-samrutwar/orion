@@ -34,7 +34,9 @@ function AssetCard({ asset }: { asset: Asset }) {
         <div className={`text-sm ${isUp ? "text-emerald-600" : "text-rose-600"}`}>
           {isUp ? "▲" : "▼"} ${Math.abs(livePrice * (asset.changePct24h / 100)).toFixed(2)} ({Math.abs(asset.changePct24h).toFixed(2)}%) 24H
         </div>
-        <div className="mt-4 h-28 rounded-xl bg-gradient-to-tr from-black/5 to-transparent dark:from-white/10" />
+        <div className="mt-4 rounded-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
+          <Sparkline ticker={asset.ticker} isUp={isUp} />
+        </div>
       </div>
     </div>
   );
@@ -66,6 +68,62 @@ export function ExploreAssets() {
         ))}
       </div>
     </section>
+  );
+}
+
+// Small, dependency-free sparkline with seeded randomness
+function mulberry32(a: number) {
+  return function () {
+    let t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(str: string) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+
+function Sparkline({ ticker, isUp }: { ticker: string; isUp: boolean }) {
+  const width = 360;
+  const height = 100;
+  const padding = 6;
+  const count = 32;
+
+  const seed = hashString(`${ticker}-${new Date().toDateString()}`);
+  const rnd = mulberry32(seed);
+  const points: number[] = [];
+  let val = isUp ? 0.4 : 0.6; // bias start
+  for (let i = 0; i < count; i++) {
+    const drift = (rnd() - 0.5) * 0.08 + (isUp ? 0.01 : -0.01);
+    val = Math.min(0.95, Math.max(0.05, val + drift));
+    points.push(val);
+  }
+
+  const stepX = (width - padding * 2) / (count - 1);
+  const coords = points.map((p, i) => [padding + i * stepX, padding + (1 - p) * (height - padding * 2)]);
+  const path = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c[0]},${c[1]}`).join(" ");
+  const stroke = isUp ? "#059669" : "#e11d48";
+  const fill = isUp ? "url(#gradUp)" : "url(#gradDown)";
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-28">
+      <defs>
+        <linearGradient id="gradUp" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="gradDown" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${path} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`} fill={fill} />
+      <path d={path} fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
 

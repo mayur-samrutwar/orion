@@ -13,12 +13,12 @@ type Row = {
 function List({ title, rows }: { title: string; rows: Row[] }) {
   const { data } = useMetalPrices();
   return (
-    <div className="rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur p-0">
-      <div className="flex items-center gap-2 px-0 pt-4 sm:pt-6 pb-2 sm:pb-3">
+    <div className="rounded-3xl bg-white/60 dark:bg-white/5 backdrop-blur p-5 ring-1 ring-black/5 dark:ring-white/10 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
         <h3 className="text-lg font-bold tracking-tight">{title}</h3>
         <span className="text-[11px] px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10">24H</span>
       </div>
-      <ul className="divide-y divide-black/5 dark:divide-white/10 px-4 sm:px-6 pb-4 sm:pb-6">
+      <ul className="divide-y divide-black/5 dark:divide-white/10">
         {rows.map((r, i) => {
           const up = r.changePct >= 0;
           const price = r.title === "oGold"
