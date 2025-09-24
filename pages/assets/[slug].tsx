@@ -2,6 +2,8 @@ import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useMetalPrices } from "@/hooks/useMetalPrices";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 
 function mulberry32(a: number) {
   return function () {
@@ -61,6 +63,7 @@ export default function AssetPage() {
   const router = useRouter();
   const slug = String(router.query.slug || "");
   const { data } = useMetalPrices();
+  const { account } = useWallet();
   const meta = useMemo(() => {
     const map = {
       ogold: { name: "oGold", sub: "Tokenized Gold", icon: "/icons/gold.png" },
@@ -127,7 +130,7 @@ export default function AssetPage() {
               key={r}
               onClick={() => setRange(r)}
               className={`h-8 px-3 rounded-full text-xs font-medium ring-1 ring-black/10 dark:ring-white/15 transition ${
-                range === r ? "bg-black text-white dark:bg-white dark:text-black" : "bg-transparent text-black/70 dark:text-white/70"
+                range === r ? "bg-black !text-white dark:bg-white dark:!text-black" : "bg-transparent text-black/70 dark:text-white/70"
               }`}
             >
               {r}
@@ -146,7 +149,7 @@ export default function AssetPage() {
             <button
               onClick={() => setSide("buy")}
               className={`h-8 px-4 rounded-full text-xs font-medium ring-1 ring-black/10 dark:ring-white/15 transition ${
-                side === "buy" ? "bg-black text-white dark:bg-white dark:text-black" : "bg-transparent text-black/70 dark:text-white/70"
+                side === "buy" ? "bg-black !text-white dark:bg-white dark:!text-black" : "bg-transparent text-black/70 dark:text-white/70"
               }`}
             >
               Buy
@@ -154,7 +157,7 @@ export default function AssetPage() {
             <button
               onClick={() => setSide("sell")}
               className={`h-8 px-4 rounded-full text-xs font-medium ring-1 ring-black/10 dark:ring-white/15 transition ${
-                side === "sell" ? "bg-black text-white dark:bg-white dark:text-black" : "bg-transparent text-black/70 dark:text-white/70"
+                side === "sell" ? "bg-black !text-white dark:bg-white dark:!text-black" : "bg-transparent text-black/70 dark:text-white/70"
               }`}
             >
               Sell
@@ -189,7 +192,15 @@ export default function AssetPage() {
             </div>
           </div>
 
-          <button className="w-full h-11 rounded-full bg-black text-white dark:bg-white dark:text-black text-sm font-medium">Connect Wallet</button>
+          {account ? (
+            <button className="w-full h-11 rounded-full bg-black !text-white dark:bg-white dark:!text-black text-sm font-medium">
+              {side === "buy" ? `Buy ${meta.name}` : `Sell ${meta.name}`}
+            </button>
+          ) : (
+            <WalletSelector>
+              <button className="w-full h-11 rounded-full bg-black !text-white dark:bg-white dark:!text-black text-sm font-medium">Connect Wallet</button>
+            </WalletSelector>
+          )}
         </div>
       </div>
     </div>
