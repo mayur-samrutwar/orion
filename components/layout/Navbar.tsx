@@ -20,13 +20,13 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full backdrop-blur bg-white/70 dark:bg-black/40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xl font-semibold tracking-tight">orion</span>
+          <span className="text-xl font-semibold tracking-tight">Orion</span>
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">buy gold</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">buy silver</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">proof of reserve</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">Buy oGold</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">buy oSilver</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="#">Proof of Reserve</Link>
         </nav>
 
         <div className="relative">

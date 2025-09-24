@@ -1,4 +1,6 @@
 import React, { useMemo } from "react";
+import Image from "next/image";
+import { useMetalPrices } from "@/hooks/useMetalPrices";
 
 type PriceItem = {
   name: string;
@@ -23,7 +25,7 @@ function TickerItem({ item }: { item: PriceItem }) {
   const isUp = item.changePct >= 0;
   return (
     <div className="flex items-center gap-2 px-6">
-      <span className="uppercase tracking-wide text-sm">{item.name}</span>
+      <span className="capitalize tracking-wide text-sm">{item.name}</span>
       <span className="text-sm">${item.price.toFixed(2)}</span>
       <span className={isUp ? "text-emerald-600" : "text-rose-600"}>
         <Arrow up={isUp} /> <span className="text-sm">{Math.abs(item.changePct).toFixed(2)}%</span>
@@ -33,28 +35,34 @@ function TickerItem({ item }: { item: PriceItem }) {
 }
 
 export function PriceTicker() {
-  const data: PriceItem[] = useMemo(
-    () => [
-      { name: "gold", price: 2387.12, changePct: 0.64 },
-      { name: "silver", price: 28.44, changePct: -0.23 },
-      { name: "gold", price: 2387.12, changePct: 0.64 },
-      { name: "silver", price: 28.44, changePct: -0.23 },
-      { name: "gold", price: 2387.12, changePct: 0.64 },
-      { name: "silver", price: 28.44, changePct: -0.23 },
-    ],
-    []
-  );
+  const { data } = useMetalPrices();
+  const dataItems: PriceItem[] = useMemo(() => {
+    const gold = data?.gold?.usdPerGram ?? 2387.12 / 88;
+    const silver = data?.silver?.usdPerGram ?? 28.44 / 88;
+    return [
+      { name: "oGold", price: gold, changePct: 0.0 },
+      { name: "oSilver", price: silver, changePct: 0.0 },
+      { name: "oGold", price: gold, changePct: 0.0 },
+      { name: "oSilver", price: silver, changePct: 0.0 },
+      { name: "oGold", price: gold, changePct: 0.0 },
+      { name: "oSilver", price: silver, changePct: 0.0 },
+    ];
+  }, [data]);
 
   return (
     <div className="relative bg-white/60 dark:bg-black/40 backdrop-blur">
-      {/* gradient fades */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white dark:from-black to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white dark:from-black to-transparent" />
-      <div className="overflow-hidden">
-        <div className="flex whitespace-nowrap animate-[ticker_30s_linear_infinite]">
-          {data.map((item, idx) => (
-            <TickerItem key={idx} item={item} />
-          ))}
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* gradient fades aligned to container padding */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-12 lg:w-16 bg-gradient-to-r from-white dark:from-black to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-12 lg:w-16 bg-gradient-to-l from-white dark:from-black to-transparent" />
+        <div className="overflow-hidden">
+          <div className="flex whitespace-nowrap animate-[ticker_30s_linear_infinite]">
+            {dataItems.map((item, idx) => (
+              <div key={idx} className="flex items-center">
+                <TickerItem item={item} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <style jsx global>{`
