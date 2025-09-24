@@ -12,19 +12,19 @@ module orion::orion {
     /// Alias for testnet USDC: 0x1::test_coin::TestCoin
     struct USDC has drop {}
 
-    /// xGOLD and xSILVER fungible tokens (6 decimals)
-    struct XGOLD has store, drop {}
-    struct XSILVER has store, drop {}
+    /// oGOLD and oSILVER fungible tokens (6 decimals)
+    struct OGOLD has store, drop {}
+    struct OSILVER has store, drop {}
 
     /// Admin and configuration caps
     struct Admin has key {
         admin: address,
         fee_bps: u64,
         min_usdc_reserve: u64,
-        xgold_mint: coin::MintCapability<XGOLD>,
-        xgold_burn: coin::BurnCapability<XGOLD>,
-        xsilver_mint: coin::MintCapability<XSILVER>,
-        xsilver_burn: coin::BurnCapability<XSILVER>,
+        ogold_mint: coin::MintCapability<OGOLD>,
+        ogold_burn: coin::BurnCapability<OGOLD>,
+        osilver_mint: coin::MintCapability<OSILVER>,
+        osilver_burn: coin::BurnCapability<OSILVER>,
     }
 
     /// Pyth-like oracle configuration. Prices are stored with 6 decimals.
@@ -37,13 +37,13 @@ module orion::orion {
     }
 
     /// xy=k AMM pool with LP share ledger
-    struct PoolGold has key { token_reserve: coin::Coin<XGOLD>, usdc_reserve: coin::Coin<USDC>, total_lp_shares: u128, shares: table::Table<address, u128> }
-    struct PoolSilver has key { token_reserve: coin::Coin<XSILVER>, usdc_reserve: coin::Coin<USDC>, total_lp_shares: u128, shares: table::Table<address, u128> }
+    struct PoolGold has key { token_reserve: coin::Coin<OGOLD>, usdc_reserve: coin::Coin<USDC>, total_lp_shares: u128, shares: table::Table<address, u128> }
+    struct PoolSilver has key { token_reserve: coin::Coin<OSILVER>, usdc_reserve: coin::Coin<USDC>, total_lp_shares: u128, shares: table::Table<address, u128> }
 
     /// Proof-of-reserve: total minted per token; backing is sum of USDC reserves
     struct ProofOfReserve has key {
-        total_minted_xgold: u128,
-        total_minted_xsilver: u128,
+        total_minted_ogold: u128,
+        total_minted_osilver: u128,
     }
 
     // Events
@@ -83,26 +83,26 @@ module orion::orion {
 
         // Note: Do not register USDC here; USDC is a local alias for demo.
 
-        let (xgold_burn, xgold_freeze, xgold_mint) = coin::initialize<XGOLD>(admin, string::utf8(b"xGOLD"), string::utf8(b"Orion Gold"), 6, false);
-        let (xsilver_burn, xsilver_freeze, xsilver_mint) = coin::initialize<XSILVER>(admin, string::utf8(b"xSILVER"), string::utf8(b"Orion Silver"), 6, false);
+        let (ogold_burn, ogold_freeze, ogold_mint) = coin::initialize<OGOLD>(admin, string::utf8(b"oGOLD"), string::utf8(b"Orion Gold"), 6, false);
+        let (osilver_burn, osilver_freeze, osilver_mint) = coin::initialize<OSILVER>(admin, string::utf8(b"oSILVER"), string::utf8(b"Orion Silver"), 6, false);
 
-        move_to(admin, PoolGold { token_reserve: coin::zero<XGOLD>(), usdc_reserve: coin::zero<USDC>(), total_lp_shares: 0, shares: table::new<address, u128>() });
-        move_to(admin, PoolSilver { token_reserve: coin::zero<XSILVER>(), usdc_reserve: coin::zero<USDC>(), total_lp_shares: 0, shares: table::new<address, u128>() });
+        move_to(admin, PoolGold { token_reserve: coin::zero<OGOLD>(), usdc_reserve: coin::zero<USDC>(), total_lp_shares: 0, shares: table::new<address, u128>() });
+        move_to(admin, PoolSilver { token_reserve: coin::zero<OSILVER>(), usdc_reserve: coin::zero<USDC>(), total_lp_shares: 0, shares: table::new<address, u128>() });
 
         move_to(admin, OracleConfig { xau_feed_id: xau_feed_hex, xag_feed_id: xag_feed_hex, xau_usd_6: 0, xag_usd_6: 0, last_update_ts: timestamp::now_seconds() });
-        move_to(admin, ProofOfReserve { total_minted_xgold: 0, total_minted_xsilver: 0 });
+        move_to(admin, ProofOfReserve { total_minted_ogold: 0, total_minted_osilver: 0 });
 
         move_to(admin, Admin {
             admin: addr,
             fee_bps,
             min_usdc_reserve,
-            xgold_mint,
-            xgold_burn,
-            xsilver_mint,
-            xsilver_burn,
+            ogold_mint,
+            ogold_burn,
+            osilver_mint,
+            osilver_burn,
         });
-        coin::destroy_freeze_cap<XGOLD>(xgold_freeze);
-        coin::destroy_freeze_cap<XSILVER>(xsilver_freeze);
+        coin::destroy_freeze_cap<OGOLD>(ogold_freeze);
+        coin::destroy_freeze_cap<OSILVER>(osilver_freeze);
     }
 
     fun assert_admin(s: &signer) acquires Admin { let a = borrow_global<Admin>(signer::address_of(s)); assert!(a.admin == signer::address_of(s), E_NOT_ADMIN) }
@@ -150,12 +150,12 @@ module orion::orion {
             let share_b = (pool.total_lp_shares * (ua as u128)) / (coin::value(&pool.usdc_reserve) as u128);
             mint_shares = if (share_a < share_b) share_a else share_b; assert!(mint_shares > 0, E_INVALID_AMOUNT)
         };
-        let token_in = coin::withdraw<XGOLD>(lp, ta);
+        let token_in = coin::withdraw<OGOLD>(lp, ta);
         let usdc_in = coin::withdraw<USDC>(lp, ua);
         coin::merge(&mut pool.token_reserve, token_in); coin::merge(&mut pool.usdc_reserve, usdc_in);
         if (table::contains(&pool.shares, provider)) { let v_ref = table::borrow_mut(&mut pool.shares, provider); *v_ref = *v_ref + mint_shares } else { table::add(&mut pool.shares, provider, mint_shares) };
         pool.total_lp_shares = pool.total_lp_shares + mint_shares;
-        event::emit(LiquidityAddedEvent { token: b"xGOLD", provider, token_amount: ta, usdc_amount: ua, lp_shares_minted: mint_shares })
+        event::emit(LiquidityAddedEvent { token: b"oGOLD", provider, token_amount: ta, usdc_amount: ua, lp_shares_minted: mint_shares })
     }
     public entry fun add_liquidity_xsilver(lp: &signer, token_amount: u64, usdc_amount: u64) acquires PoolSilver {
         let provider = signer::address_of(lp);
@@ -168,12 +168,12 @@ module orion::orion {
             let share_b = (pool.total_lp_shares * (ua as u128)) / (coin::value(&pool.usdc_reserve) as u128);
             mint_shares = if (share_a < share_b) share_a else share_b; assert!(mint_shares > 0, E_INVALID_AMOUNT)
         };
-        let token_in = coin::withdraw<XSILVER>(lp, ta);
+        let token_in = coin::withdraw<OSILVER>(lp, ta);
         let usdc_in = coin::withdraw<USDC>(lp, ua);
         coin::merge(&mut pool.token_reserve, token_in); coin::merge(&mut pool.usdc_reserve, usdc_in);
         if (table::contains(&pool.shares, provider)) { let v_ref = table::borrow_mut(&mut pool.shares, provider); *v_ref = *v_ref + mint_shares } else { table::add(&mut pool.shares, provider, mint_shares) };
         pool.total_lp_shares = pool.total_lp_shares + mint_shares;
-        event::emit(LiquidityAddedEvent { token: b"xSILVER", provider, token_amount: ta, usdc_amount: ua, lp_shares_minted: mint_shares })
+        event::emit(LiquidityAddedEvent { token: b"oSILVER", provider, token_amount: ta, usdc_amount: ua, lp_shares_minted: mint_shares })
     }
 
     public entry fun remove_liquidity_xgold(lp: &signer, shares: u128) acquires PoolGold {
@@ -187,8 +187,8 @@ module orion::orion {
         let token_out = (tr * shares) / pool.total_lp_shares; let usdc_out = (ur * shares) / pool.total_lp_shares;
         *user_sh_ref = user_sh - shares; pool.total_lp_shares = pool.total_lp_shares - shares;
         let token_withdraw = coin::extract(&mut pool.token_reserve, token_out as u64); let usdc_withdraw = coin::extract(&mut pool.usdc_reserve, usdc_out as u64);
-        coin::deposit<XGOLD>(provider, token_withdraw); coin::deposit<USDC>(provider, usdc_withdraw);
-        event::emit(LiquidityRemovedEvent { token: b"xGOLD", provider, token_amount: token_out as u64, usdc_amount: usdc_out as u64, lp_shares_burned: shares })
+        coin::deposit<OGOLD>(provider, token_withdraw); coin::deposit<USDC>(provider, usdc_withdraw);
+        event::emit(LiquidityRemovedEvent { token: b"oGOLD", provider, token_amount: token_out as u64, usdc_amount: usdc_out as u64, lp_shares_burned: shares })
     }
 
     public entry fun remove_liquidity_xsilver(lp: &signer, shares: u128) acquires PoolSilver {
@@ -202,23 +202,23 @@ module orion::orion {
         let token_out = (tr * shares) / pool.total_lp_shares; let usdc_out = (ur * shares) / pool.total_lp_shares;
         *user_sh_ref = user_sh - shares; pool.total_lp_shares = pool.total_lp_shares - shares;
         let token_withdraw = coin::extract(&mut pool.token_reserve, token_out as u64); let usdc_withdraw = coin::extract(&mut pool.usdc_reserve, usdc_out as u64);
-        coin::deposit<XSILVER>(provider, token_withdraw); coin::deposit<USDC>(provider, usdc_withdraw);
-        event::emit(LiquidityRemovedEvent { token: b"xSILVER", provider, token_amount: token_out as u64, usdc_amount: usdc_out as u64, lp_shares_burned: shares })
+        coin::deposit<OSILVER>(provider, token_withdraw); coin::deposit<USDC>(provider, usdc_withdraw);
+        event::emit(LiquidityRemovedEvent { token: b"oSILVER", provider, token_amount: token_out as u64, usdc_amount: usdc_out as u64, lp_shares_burned: shares })
     }
 
     // PoR-guarded mint/burn
-    public entry fun mint_xgold(admin: &signer, to: address, amount: u64) acquires Admin, ProofOfReserve, OracleConfig, PoolGold, PoolSilver { assert_admin(admin); assert_por_mint_gold(amount); let a = borrow_global_mut<Admin>(@orion); let c = coin::mint<XGOLD>(amount, &a.xgold_mint); coin::deposit<XGOLD>(to, c); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_xgold = por.total_minted_xgold + (amount as u128); event::emit(MintEvent { token: b"xGOLD", to, amount }); emit_por_event(b"xGOLD") }
-    public entry fun mint_xsilver(admin: &signer, to: address, amount: u64) acquires Admin, ProofOfReserve, OracleConfig, PoolGold, PoolSilver { assert_admin(admin); assert_por_mint_silver(amount); let a = borrow_global_mut<Admin>(@orion); let c = coin::mint<XSILVER>(amount, &a.xsilver_mint); coin::deposit<XSILVER>(to, c); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_xsilver = por.total_minted_xsilver + (amount as u128); event::emit(MintEvent { token: b"xSILVER", to, amount }); emit_por_event(b"xSILVER") }
+    public entry fun mint_xgold(admin: &signer, to: address, amount: u64) acquires Admin, ProofOfReserve, OracleConfig, PoolGold, PoolSilver { assert_admin(admin); assert_por_mint_gold(amount); let a = borrow_global_mut<Admin>(@orion); let c = coin::mint<OGOLD>(amount, &a.ogold_mint); coin::deposit<OGOLD>(to, c); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_ogold = por.total_minted_ogold + (amount as u128); event::emit(MintEvent { token: b"oGOLD", to, amount }); emit_por_event(b"oGOLD") }
+    public entry fun mint_xsilver(admin: &signer, to: address, amount: u64) acquires Admin, ProofOfReserve, OracleConfig, PoolGold, PoolSilver { assert_admin(admin); assert_por_mint_silver(amount); let a = borrow_global_mut<Admin>(@orion); let c = coin::mint<OSILVER>(amount, &a.osilver_mint); coin::deposit<OSILVER>(to, c); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_osilver = por.total_minted_osilver + (amount as u128); event::emit(MintEvent { token: b"oSILVER", to, amount }); emit_por_event(b"oSILVER") }
 
-    public entry fun burn_xgold_user(user: &signer, amount: u64) acquires Admin, ProofOfReserve, PoolGold, PoolSilver { let a = borrow_global_mut<Admin>(@orion); let c = coin::withdraw<XGOLD>(user, amount); coin::burn<XGOLD>(c, &a.xgold_burn); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_xgold = por.total_minted_xgold - (amount as u128); let from = signer::address_of(user); event::emit(BurnEvent { token: b"xGOLD", from, amount }); emit_por_event(b"xGOLD") }
-    public entry fun burn_xsilver_user(user: &signer, amount: u64) acquires Admin, ProofOfReserve, PoolGold, PoolSilver { let a = borrow_global_mut<Admin>(@orion); let c = coin::withdraw<XSILVER>(user, amount); coin::burn<XSILVER>(c, &a.xsilver_burn); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_xsilver = por.total_minted_xsilver - (amount as u128); let from = signer::address_of(user); event::emit(BurnEvent { token: b"xSILVER", from, amount }); emit_por_event(b"xSILVER") }
+    public entry fun burn_xgold_user(user: &signer, amount: u64) acquires Admin, ProofOfReserve, PoolGold, PoolSilver { let a = borrow_global_mut<Admin>(@orion); let c = coin::withdraw<OGOLD>(user, amount); coin::burn<OGOLD>(c, &a.ogold_burn); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_ogold = por.total_minted_ogold - (amount as u128); let from = signer::address_of(user); event::emit(BurnEvent { token: b"oGOLD", from, amount }); emit_por_event(b"oGOLD") }
+    public entry fun burn_xsilver_user(user: &signer, amount: u64) acquires Admin, ProofOfReserve, PoolGold, PoolSilver { let a = borrow_global_mut<Admin>(@orion); let c = coin::withdraw<OSILVER>(user, amount); coin::burn<OSILVER>(c, &a.osilver_burn); let por = borrow_global_mut<ProofOfReserve>(@orion); por.total_minted_osilver = por.total_minted_osilver - (amount as u128); let from = signer::address_of(user); event::emit(BurnEvent { token: b"oSILVER", from, amount }); emit_por_event(b"oSILVER") }
 
     fun assert_por_mint_gold(amount: u64) acquires OracleConfig, PoolGold, PoolSilver, ProofOfReserve {
         let oc = borrow_global<OracleConfig>(@orion);
         let price = oc.xau_usd_6; assert!(price > 0, E_ZERO_PRICE);
         let backing = total_usdc_reserves();
         let por = borrow_global<ProofOfReserve>(@orion);
-        let minted_val = mul_div((por.total_minted_xgold as u64), price, 1_000_000);
+        let minted_val = mul_div((por.total_minted_ogold as u64), price, 1_000_000);
         let add_val = mul_div(amount, price, 1_000_000);
         let after = minted_val + add_val;
         assert!(after <= backing, E_INSUFFICIENT_LIQUIDITY)
@@ -229,7 +229,7 @@ module orion::orion {
         let price = oc.xag_usd_6; assert!(price > 0, E_ZERO_PRICE);
         let backing = total_usdc_reserves();
         let por = borrow_global<ProofOfReserve>(@orion);
-        let minted_val = mul_div((por.total_minted_xsilver as u64), price, 1_000_000);
+        let minted_val = mul_div((por.total_minted_osilver as u64), price, 1_000_000);
         let add_val = mul_div(amount, price, 1_000_000);
         let after = minted_val + add_val;
         assert!(after <= backing, E_INSUFFICIENT_LIQUIDITY)
@@ -241,7 +241,7 @@ module orion::orion {
 
     fun emit_por_event(name: vector<u8>) acquires PoolGold, PoolSilver, ProofOfReserve {
         let por = borrow_global<ProofOfReserve>(@orion);
-        let minted = if (vector::length(&name) == 5) por.total_minted_xgold else por.total_minted_xsilver;
+        let minted = if (vector::length(&name) == 5) por.total_minted_ogold else por.total_minted_osilver;
         event::emit(ProofOfReserveEvent { token: name, total_minted: minted, usdc_backing: total_usdc_reserves(), timestamp: timestamp::now_seconds() })
     }
 
@@ -254,8 +254,8 @@ module orion::orion {
         let out = amount_out(dx_net, x, y); assert!(out > 0 && y > out, E_POOL_DRY);
         let usdc_in = coin::withdraw<USDC>(user, dx);
         coin::merge(&mut pool.usdc_reserve, usdc_in);
-        let token_out = coin::extract(&mut pool.token_reserve, out); coin::deposit<XGOLD>(addr, token_out);
-        event::emit(SwapEvent { token: b"xGOLD", user: addr, input_is_usdc: true, input_amount: dx, output_amount: out, fee_paid: fee })
+        let token_out = coin::extract(&mut pool.token_reserve, out); coin::deposit<OGOLD>(addr, token_out);
+        event::emit(SwapEvent { token: b"oGOLD", user: addr, input_is_usdc: true, input_amount: dx, output_amount: out, fee_paid: fee })
     }
     public entry fun buy_token_xsilver(user: &signer, usdc_amount: u64) acquires Admin, PoolSilver {
         let addr = signer::address_of(user); let pool = borrow_global_mut<PoolSilver>(@orion);
@@ -265,8 +265,8 @@ module orion::orion {
         let out = amount_out(dx_net, x, y); assert!(out > 0 && y > out, E_POOL_DRY);
         let usdc_in = coin::withdraw<USDC>(user, dx);
         coin::merge(&mut pool.usdc_reserve, usdc_in);
-        let token_out = coin::extract(&mut pool.token_reserve, out); coin::deposit<XSILVER>(addr, token_out);
-        event::emit(SwapEvent { token: b"xSILVER", user: addr, input_is_usdc: true, input_amount: dx, output_amount: out, fee_paid: fee })
+        let token_out = coin::extract(&mut pool.token_reserve, out); coin::deposit<OSILVER>(addr, token_out);
+        event::emit(SwapEvent { token: b"oSILVER", user: addr, input_is_usdc: true, input_amount: dx, output_amount: out, fee_paid: fee })
     }
 
     public entry fun sell_token_xgold(user: &signer, token_amount: u64) acquires Admin, PoolGold {
@@ -276,10 +276,10 @@ module orion::orion {
         let x = coin::value(&pool.token_reserve); let y = coin::value(&pool.usdc_reserve);
         let out = amount_out(dx_net, x, y); assert!(out > 0, E_POOL_DRY);
         let floor = min_usdc_reserve_internal(); let avail = if (y > floor) y - floor else 0; assert!(out <= avail, E_MIN_RESERVE);
-        let token_in = coin::withdraw<XGOLD>(user, dx);
+        let token_in = coin::withdraw<OGOLD>(user, dx);
         coin::merge(&mut pool.token_reserve, token_in);
         let usdc_out = coin::extract(&mut pool.usdc_reserve, out); coin::deposit<USDC>(addr, usdc_out);
-        event::emit(SwapEvent { token: b"xGOLD", user: addr, input_is_usdc: false, input_amount: dx, output_amount: out, fee_paid: fee })
+        event::emit(SwapEvent { token: b"oGOLD", user: addr, input_is_usdc: false, input_amount: dx, output_amount: out, fee_paid: fee })
     }
 
     public entry fun sell_token_xsilver(user: &signer, token_amount: u64) acquires Admin, PoolSilver {
@@ -289,28 +289,28 @@ module orion::orion {
         let x = coin::value(&pool.token_reserve); let y = coin::value(&pool.usdc_reserve);
         let out = amount_out(dx_net, x, y); assert!(out > 0, E_POOL_DRY);
         let floor = min_usdc_reserve_internal(); let avail = if (y > floor) y - floor else 0; assert!(out <= avail, E_MIN_RESERVE);
-        let token_in = coin::withdraw<XSILVER>(user, dx);
+        let token_in = coin::withdraw<OSILVER>(user, dx);
         coin::merge(&mut pool.token_reserve, token_in);
         let usdc_out = coin::extract(&mut pool.usdc_reserve, out); coin::deposit<USDC>(addr, usdc_out);
-        event::emit(SwapEvent { token: b"xSILVER", user: addr, input_is_usdc: false, input_amount: dx, output_amount: out, fee_paid: fee })
+        event::emit(SwapEvent { token: b"oSILVER", user: addr, input_is_usdc: false, input_amount: dx, output_amount: out, fee_paid: fee })
     }
 
     // Basic transfers
-    public entry fun transfer_xgold(from: &signer, to: address, amount: u64) { coin::transfer<XGOLD>(from, to, amount) }
-    public entry fun transfer_xsilver(from: &signer, to: address, amount: u64) { coin::transfer<XSILVER>(from, to, amount) }
+    public entry fun transfer_xgold(from: &signer, to: address, amount: u64) { coin::transfer<OGOLD>(from, to, amount) }
+    public entry fun transfer_xsilver(from: &signer, to: address, amount: u64) { coin::transfer<OSILVER>(from, to, amount) }
 
     // Views
     public fun get_price_xgold(): u64 acquires OracleConfig { borrow_global<OracleConfig>(@orion).xau_usd_6 }
     public fun get_price_xsilver(): u64 acquires OracleConfig { borrow_global<OracleConfig>(@orion).xag_usd_6 }
     public fun get_pool_info_xgold(): (u64, u64, u64, u128) acquires Admin, PoolGold { let p = borrow_global<PoolGold>(@orion); (coin::value(&p.token_reserve), coin::value(&p.usdc_reserve), fee_bps_internal(), p.total_lp_shares) }
     public fun get_pool_info_xsilver(): (u64, u64, u64, u128) acquires Admin, PoolSilver { let p = borrow_global<PoolSilver>(@orion); (coin::value(&p.token_reserve), coin::value(&p.usdc_reserve), fee_bps_internal(), p.total_lp_shares) }
-    public fun get_proof_of_reserve_xgold(): (u128, u64) acquires ProofOfReserve, PoolGold, PoolSilver { let por = borrow_global<ProofOfReserve>(@orion); (por.total_minted_xgold, total_usdc_reserves()) }
-    public fun get_proof_of_reserve_xsilver(): (u128, u64) acquires ProofOfReserve, PoolGold, PoolSilver { let por = borrow_global<ProofOfReserve>(@orion); (por.total_minted_xsilver, total_usdc_reserves()) }
+    public fun get_proof_of_reserve_xgold(): (u128, u64) acquires ProofOfReserve, PoolGold, PoolSilver { let por = borrow_global<ProofOfReserve>(@orion); (por.total_minted_ogold, total_usdc_reserves()) }
+    public fun get_proof_of_reserve_xsilver(): (u128, u64) acquires ProofOfReserve, PoolGold, PoolSilver { let por = borrow_global<ProofOfReserve>(@orion); (por.total_minted_osilver, total_usdc_reserves()) }
 
     // Registration helpers
     public entry fun register_usdc(s: &signer) { coin::register<USDC>(s) }
-    public entry fun register_xgold(s: &signer) { coin::register<XGOLD>(s) }
-    public entry fun register_xsilver(s: &signer) { coin::register<XSILVER>(s) }
+    public entry fun register_xgold(s: &signer) { coin::register<OGOLD>(s) }
+    public entry fun register_xsilver(s: &signer) { coin::register<OSILVER>(s) }
 
     // Admin: deposit USDC directly into pool reserves to provide backing before mint.
     public entry fun admin_back_usdc_gold(admin: &signer, usdc_amount: u64) acquires PoolGold {

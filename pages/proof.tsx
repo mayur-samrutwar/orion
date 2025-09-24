@@ -1,4 +1,5 @@
 import React from "react";
+import { Seo } from "@/components/layout/Seo";
 
 export default function PrrofPage() {
   const invoices = [
@@ -16,9 +17,10 @@ export default function PrrofPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-black py-10">
+      <Seo title="Proof of Reserve" description="View proof-of-invoice documents for Orion reserves." />
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight">Proof of Invoices</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Proof of Reserve</h1>
           <p className="text-sm text-black/60 dark:text-white/60 mt-1">Date: 24th Sept 2025</p>
         </div>
 

@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import { Seo } from "@/components/layout/Seo";
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useMetalPrices } from "@/hooks/useMetalPrices";
@@ -108,6 +109,7 @@ export default function AssetPage() {
 
   return (
     <>
+    <Seo title={`${meta.name} · Asset`} description={`Trade ${meta.name} on Orion.`} />
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 grid gap-8 lg:grid-cols-[1fr_380px] items-start">
       {/* Left: Chart card */}
       <div className="rounded-3xl bg-white/60 dark:bg-white/5 backdrop-blur ring-1 ring-black/5 dark:ring-white/10 p-5 shadow-sm">

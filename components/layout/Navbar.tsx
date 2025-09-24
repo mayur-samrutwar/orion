@@ -26,17 +26,15 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="/lp">LP</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/mint-usdc">Mint USDC</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/admin">Admin</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/set-prices">Set Prices</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/debug-pools">Debug</Link>
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
         </nav>
 
         <div className="relative">
           {!account ? (
-            <WalletSelector>
-              <button className="h-10 px-4 rounded-full bg-black text-white dark:bg-white dark:text-black text-sm font-medium hover:opacity-90 transition">
-                Connect
-              </button>
-            </WalletSelector>
+            <WalletSelector />
           ) : (
             <div className="relative">
               <button
@@ -73,7 +71,9 @@ export function Navbar() {
         <div className="px-4 py-3 flex items-center justify-center gap-6 text-sm">
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="/trade">Trade</Link>
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="/lp">LP</Link>
-          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/mint-usdc">Mint USDC</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/admin">Admin</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/set-prices">Set Prices</Link>
+          <Link className="hover:text-black/60 dark:hover:text-white/70" href="/debug-pools">Debug</Link>
           <Link className="hover:text-black/60 dark:hover:text-white/70" href="/proof">Proof of Reserve</Link>
         </div>
       </div>
